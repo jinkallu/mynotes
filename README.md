@@ -161,7 +161,8 @@ w -= learning_rate * dw
 b -= learning_rate * db
 ```
 
-Eventually, \( w \) and \( b \) will converge to values that minimize the loss.
+Eventually, \( w \) and \( b \) will converge to values that minimize the loss. Figure below shows loss over epochs plot.
+![Alt text](./liniear_regression/Loss_over_Epochs.png)
 
 ---
 

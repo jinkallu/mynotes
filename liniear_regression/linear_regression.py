@@ -125,6 +125,9 @@ epochs = 500
 
 w = 10
 b = 10
+
+losses = []  # To store loss at each epoch
+
 for epoch in range(epochs):
     # forward pass
     # calculate predictions
@@ -132,6 +135,7 @@ for epoch in range(epochs):
 
     # calculate losses
     l = loss(Y, y_predicted)
+    losses.append(l)
 
     # backpropagation
     # calculate gradients
@@ -148,3 +152,13 @@ for epoch in range(epochs):
     # print info
     if(epoch % 1==0):
         print(f'epoch {epoch+1}: w={w:.3f}, b={b:.3f}, loss={l:0.8f}, dw={dw:.3f}, forward(10)={forward(w,10,b):0.3f}')
+
+# Plot loss curve
+fig, ax = plt.subplots()
+
+ax.plot(range(1, epochs + 1), losses, label='Loss')
+ax.set_xlabel('Epoch')
+ax.set_ylabel('Loss (MSE)')
+ax.grid(True)
+ax.legend()
+fig.savefig("Loss_over_Epochs.png")
