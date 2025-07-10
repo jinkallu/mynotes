@@ -114,24 +114,23 @@ If we compute the **gradient of the loss w.r.t. \( w \)**, we can move in the op
 #### Analytical derivative
 Lets calculate teh derivative of loss function w.r.t. **w**
 Our original prediction function is 
-```
+```python
 ŷ = w.x + b
 ```
 Loss (MSE) is:
-```
+```python
 L = 1/n∑(y_i - ŷ_i)^2
 
 ```
-```
+```python
 L = 1/n∑(y_i - (w.x_i + b))^2
-
 ```
 Derivative of Loss w.r.t **w**:
-```
+```python
 ∂L/∂W = 1/n∑2(y_i - ŷ_i).(-x_i)
 ```
 Or equivalently:
-```
+```python
 ∂L/∂W = 2/n∑x_i(ŷ_i - y_i)
 ```
 
@@ -210,7 +209,7 @@ This process is called **backpropagation**.
 
 PyTorch, Tensorflow, JAX are some of teh libraries which supports autograd.
 ### A simple example (PyTorch):
-```
+```python
 import torch
 
 x = torch.tensor(2.0, requires_grad=True)
@@ -247,7 +246,7 @@ Here:
 - Repeat until convergence.
 
 ### TensorFlow
-```
+```python
 import tensorflow as tf
 x = tf.Variable(2.0)
 with tf.GradientTape() as tape:
@@ -257,7 +256,7 @@ print(dy_dx)  # 7.0
 ```
 
 ### JAX
-```
+```python
 import jax
 import jax.numpy as jnp
 def f(x): return x**2 + 3*x + 1
@@ -266,45 +265,45 @@ print(df_dx(2.0))  # 7.0
 ```
 
 ## Linear regression using PyTorch
-Now lets implement the linear regression using PyTorch and autograd, without calculating teh gradient ourselves. 
-We define teh input X as a torch tensor.
-```
+Now let's implement linear regression using PyTorch and autograd, without calculating the gradient ourselves.  
+We define the input `X` as a torch tensor:
+```python
 X = torch.tensor([-2, -1, 1, 2], dtype=torch.float32)
 ```
-then we caloculate the original output Y with original weight **w=1** and **b=0**
-```
+Then we calculate the original output Y with original weight **w = 1** and **b = 0**:
+```python
 Y = W_original * X + B_Original  # Y = wx + b
 ```
-Now we need to instruct PyTorch's autograd to calculate the gradient of loass function w.r.t both **w** and **b**. 
+Now we need to instruct PyTorch's autograd to calculate the gradient of the loss function w.r.t both **w** and **b**. 
 We initialize both **w** and **b** as follows:
-```
+```python
 # Initialize parameters with gradient tracking
 w = torch.randn((), requires_grad=True)  # scalar weight
 b = torch.randn((), requires_grad=True)  # scalar bias
 ```
-Now PyTorch track all operations on **w** and **b**.
+Now PyTorch will track all operations on **w** and **b**.
 
-Now lets define teh foreward pass function:
-```
+Let's define the foreward pass function:
+```python
 # Forward pass function
 def forward(x, w, b):
     return w * x + b 
 ```
-and loss function:
-```
+And loss function:
+```python
 # Loss function (Mean Squared Error)
 def loss(y_true, y_pred):
     return ((y_true - y_pred) ** 2).mean()
 ```
-Now whenever we calculate loss function and then call **backward()** on that function, it will calculate the gradient of loss function w.r.t the gradient tracking enabled variables (in this case **∂L/∂w** and **∂L/∂b**) and store teh corresponding gradients to **w.grad** and **b.grad**:
-```
+Now whenever we calculate the loss function and then call **backward()** on that value, PyTorch will compute the gradients of the loss function w.r.t the gradient-enabled variables (in this case **∂L/∂w** and **∂L/∂b**) and store the corresponding gradients in **w.grad** and **b.grad**:
+```python
 # Calculate loss
 l = loss(Y, y_predicted)
 l.backward()  # Compute gradients
-# gradients: w.grad and b.grad
+# gradients: ∂L/∂w = w.grad and ∂L/∂b = b.grad
 ```
-The rest of teh gradient descent code is teh same:
-```
+The rest of the gradient descent code is the same:
+```python
 # Training loop     
 for epoch in range(epochs):
     # Forward pass
