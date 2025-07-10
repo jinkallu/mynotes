@@ -447,6 +447,7 @@ In the first example, we had a very simple loss function with a shape of a parab
 
 What if we have more complex loss function with multipple minimas. 
 ![Alt text](./logic_regression/minima.jpg)
+
 The job of the optimize is to find the global minima, but in this case, Vanilla GD will fail to reach global minimum, if we start at **w=-1.0**, for example. 
 
 There are different types of optimizers available in PyTorch, like Vanilla GD (SGD), Stochastic (SGD), Adam (adaptive learning rate), etc.  
