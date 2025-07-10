@@ -98,7 +98,17 @@ They give similar loss values, but we need a direction to move toward \( w = 1 \
 ---
 
 ### 🧭 Using the Gradient
+First, let’s calculate the slope at each loss point. To do this, we can predict \( y \) around the weight point \( w \). Let’s define a small delta \( h = 0.01 \) for the numerical derivative.
 
+Next, calculate the predicted values at \( w - h \) and \( w + h \). Then compute the losses \( L_{plus} \) and \( L_{minus} \).
+
+Now we are ready to calculate the slope as:
+
+```python
+slope = (L_plus - L_minus) / (2 * h)
+``` 
+The Figure below shows a plot of these slope lines for the loss around each w point. On the left side of w=1, slope has negative value; on the right side, the slope has a positve value. At w=1, it has a zero value, which would be a line parallel to the x-axis if plotted. The slope gives us an idea of the direction we need to move w rom a given point to minimize the loss.
+![Alt text](Lossplot_with_tangents.png)
 The gradient tells us the direction in which the loss increases.  
 If we compute the **gradient of the loss w.r.t. \( w \)**, we can move in the opposite direction to minimize it.
 

@@ -57,6 +57,36 @@ ax.set_ylim(-1, 8)
 ax.scatter(W, L)
 fig.savefig("Lossplot.png")
 
+# Compute tangent slopes using central difference
+# Plotting
+fig, ax = plt.subplots()
+ax.set_xlabel('weight')
+ax.set_ylabel('loss')
+ax.set_ylim(-1, 8)
+ax.scatter(W, L, color='blue', label='Loss Points')
+
+h = 0.01
+delta_x = 0.2  # width of tangent line segments
+for i, w in enumerate(W):
+    # Compute slope (dL/dw)
+    L_plus = loss(Y, forward(w + h, X, B_Original))
+    L_minus = loss(Y, forward(w - h, X, B_Original))
+    slope = (L_plus - L_minus) / (2 * h)
+    
+    # Define small x-range around the point for the tangent line
+    x_start = w - delta_x
+    x_end = w + delta_x
+    x_vals = np.linspace(x_start, x_end, 10)
+    
+    # Line equation: y = L[i] + slope * (x - W[i])
+    y_vals = L[i] + slope * (x_vals - w)
+    
+    ax.plot(x_vals, y_vals, color='red', alpha=0.7)
+
+
+plt.legend()
+fig.savefig("Lossplot_with_tangents.png")
+
 # gradient of loss wrt weight
 def gradient_dl_dw(x, y, y_predicted):
     return np.dot(2*x, y_predicted-y).mean()
