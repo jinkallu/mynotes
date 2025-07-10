@@ -16,7 +16,7 @@ This explanation is based on that tutorial.
 ### 📌 Neuron Node as a Linear Model
 
 Imagine we have a model of a neuron node as shown below:  
-![Alt text](node.png)
+![Alt text](./liniear_regression/node.png)
 
 It represents the linear equation:  
 \[
@@ -46,7 +46,7 @@ Then the output:
 Y = [-2, -1, 1, 2]
 \]
 
-![Alt text](Original.png)
+![Alt text](./liniear_regression/Original.png)
 
 ---
 
@@ -64,7 +64,7 @@ This gives:
 \hat{y} = [-20, -10, 10, 20]
 \]
 
-![Alt text](Original_vs_predicted.png)
+![Alt text](./liniear_regression/Original_vs_predicted.png)
 
 Now we need a way to **update \( w \) and \( b \)** so that \( \hat{y} \) moves closer to the original \( Y \).
 
@@ -87,7 +87,7 @@ Let’s visualize the loss for different weight values:
 W = [-0.5, 0, 0.5, 1.5, 2, 2.5]
 ```
 
-![Alt text](Lossplot.png)
+![Alt text](./liniear_regression/Lossplot.png)
 
 From the plot, we observe that:
 - Loss is minimized when \( w \approx 1 \)
@@ -108,9 +108,32 @@ Now we are ready to calculate the slope as:
 slope = (L_plus - L_minus) / (2 * h)
 ``` 
 The Figure below shows a plot of these slope lines for the loss around each w point. On the left side of w=1, slope has negative value; on the right side, the slope has a positve value. At w=1, it has a zero value, which would be a line parallel to the x-axis if plotted. The slope gives us an idea of the direction we need to move w rom a given point to minimize the loss.
-![Alt text](Lossplot_with_tangents.png)
+![Alt text](./liniear_regression/Lossplot_with_tangents.png)
 The gradient tells us the direction in which the loss increases.  
 If we compute the **gradient of the loss w.r.t. \( w \)**, we can move in the opposite direction to minimize it.
+#### Analytical derivative
+Lets calculate teh derivative of loss function w.r.t. **w**
+Our original prediction function is 
+```
+ŷ = w.x + b
+```
+Loss (MSE) is:
+```
+L = 1/n∑(y_i - ŷ_i)^2
+
+```
+```
+L = 1/n∑(y_i - (w.x_i + b))^2
+
+```
+Derivative of Loss w.r.t **w**:
+```
+∂L/∂W = 1/n∑2(y_i - ŷ_i).(-x_i)
+```
+Or equivalently:
+```
+∂L/∂W = 2/n∑x_i(ŷ_i - y_i)
+```
 
 We use:
 ```python
@@ -120,7 +143,7 @@ dw = np.dot(2 * X, y_predicted - Y).mean()
 This gives the slope of the loss at the current point.  
 By applying a **learning rate**, we can control how big the step is in each update.
 
-![Alt text](LossplotWGradient.png)
+![Alt text](./liniear_regression/LossplotWGradient.png)
 
 ---
 
