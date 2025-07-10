@@ -331,3 +331,59 @@ for epoch in range(epochs):
 ![Alt text](./liniear_regression/Loss_over_Epochs_pytorch.png)
 
 [View full code](./liniear_regression/lr_pytorch.py)
+
+## Logistic Regression
+In a logic regression, we are looking for producing an output value of **0** or **1**. We call it a binary classification. On the other hand in a linear regression we can generate a value between **-inf** - **inf**. 
+
+As a first step, we need to squash the value of forward function:
+```Python
+z=w.x + b
+```
+between **0** and **1**. For that we need to use Sigmoid function:
+```Python
+σ(z)= 1 / (1 + e^(-z))
+```
+Now, if the predicted value is **> 0.5**, then we consider it as **1** --> Class 1, otherwise **0** --> Class 0. 
+
+Here the Sigmoid function is called **Activation** function.
+
+For the loss function, we are using Binary Cross Entropy (BCE).
+```python
+BCE = −[y⋅log(ŷ) + (1−y)⋅log(1− ŷ)]
+``` 
+This loss function will penalize wrong predictions more when confidence is high.
+if y=1, the loss is:  -log(ŷ)
+- We want ŷ --> 1, or else the loss is high
+
+if y=0, teh loss is log(1− ŷ)
+- We want ŷ --> 0, or else the loss is high
+
+Thus using BCE has following advantages:
+- works with Sigmoid outputs
+- Gives high penalty for confident wrong predictions
+- Encourages the model to output probabilities that match the true label
+
+[View full code](./logic_regression/logic_regression.py)
+
+### Key comparison between Logic and Linear Regression
+| Concept    | Linear Regression | Logistic Regression      |
+| ---------- | ----------------- | -------------------      |
+| Activation | None              | sigmoid()                |
+| Loss       | MSE               | BCE                      |
+| Output     | Any real value    | Value in (0, 1)          |
+| Prediction | Use directly      | > 0.5 --> 1, otherwise 0 |
+
+## Multilayer Perceptron (MLP / Feedforward Neural Netowrk)
+
+## Convolutional Neural Netwroks (CNNs)
+
+## Transfer Learning
+
+## Object Detection with Detectron 2
+
+## Reinforced Learning Basics
+### Q-Learning
+### Policy Gradient
+### Actor Critic
+
+## Classical Motion Planning
