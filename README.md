@@ -160,9 +160,11 @@ Now we can begin training by:
 w -= learning_rate * dw
 b -= learning_rate * db
 ```
-
 Eventually, \( w \) and \( b \) will converge to values that minimize the loss. Figure below shows loss over epochs plot.
+
 ![Alt text](./liniear_regression/Loss_over_Epochs.png)
+
+This method is called **gradient descent**.
 
 ---
 
@@ -180,3 +182,153 @@ Eventually, \( w \) and \( b \) will converge to values that minimize the loss. 
   - Update parameters
 
 This process lays the foundation for training more complex neural networks.
+
+---
+
+## Autograd
+### What is Autograd?
+Autograd stands for **automatic differentiation**. It is a technique used by machine learning frameworks (like PyTorch, TensorFlow, JAX) **to automatically compute derivatives (gradients)** of functions — without us having to manually derive and implement the math ourself.
+
+### Why do we need Autograd?
+In machine learning, especially neural networks and optimization, we often need gradients of loss functions with respect to parameters to perform **gradient descent**.
+
+- For complex models, calculating derivatives by hand is tedious and error-prone.
+
+- Autograd automates this process so we can focus on building models.
+### How does autograd work?
+Autograd uses two main concepts:
+
+#### 1. Computational Graph
+When we perform operations on tensors/variables with requires_grad=True, autograd builds a graph of all operations.
+
+Nodes represent operations; edges represent data dependencies.
+
+#### 2. Chain Rule
+To compute derivatives, autograd applies the chain rule of calculus by traversing this graph backward.
+
+This process is called **backpropagation**.
+
+PyTorch, Tensorflow, JAX are some of teh libraries which supports autograd.
+### A simple example (PyTorch):
+```
+import torch
+
+x = torch.tensor(2.0, requires_grad=True)
+y = x**2 + 3*x + 5  # y = x^2 + 3x + 5
+
+y.backward()  # Compute dy/dx automatically
+
+print(x.grad)  # prints 7, since dy/dx = 2x + 3 at x=2 => 2*2 +3 = 7
+```
+Here:
+
+- PyTorch tracked all operations on x.
+
+- When we call y.backward(), it computes gradient dy/dx.
+
+- Gradient stored in x.grad.
+
+### Key points:
+- We only need to declare which tensors require gradients (requires_grad=True).
+
+- After running the forward pass (computations), call .backward() on a scalar loss to compute gradients.
+
+- Gradients are accumulated in .grad attributes of tensors.
+
+- We usually zero gradients after each step (e.g., optimizer.zero_grad() or x.grad.zero_()).
+
+### How autograd helps training models?
+- We define your model and loss function.
+
+- Autograd computes gradients automatically.
+
+- We update parameters using gradients and a learning rate (gradient descent).
+
+- Repeat until convergence.
+
+### TensorFlow
+```
+import tensorflow as tf
+x = tf.Variable(2.0)
+with tf.GradientTape() as tape:
+    y = x**2 + 3*x + 1
+dy_dx = tape.gradient(y, x)
+print(dy_dx)  # 7.0
+```
+
+### JAX
+```
+import jax
+import jax.numpy as jnp
+def f(x): return x**2 + 3*x + 1
+df_dx = jax.grad(f)
+print(df_dx(2.0))  # 7.0
+```
+
+## Linear regression using PyTorch
+Now lets implement the linear regression using PyTorch and autograd, without calculating teh gradient ourselves. 
+We define teh input X as a torch tensor.
+```
+X = torch.tensor([-2, -1, 1, 2], dtype=torch.float32)
+```
+then we caloculate the original output Y with original weight **w=1** and **b=0**
+```
+Y = W_original * X + B_Original  # Y = wx + b
+```
+Now we need to instruct PyTorch's autograd to calculate the gradient of loass function w.r.t both **w** and **b**. 
+We initialize both **w** and **b** as follows:
+```
+# Initialize parameters with gradient tracking
+w = torch.randn((), requires_grad=True)  # scalar weight
+b = torch.randn((), requires_grad=True)  # scalar bias
+```
+Now PyTorch track all operations on **w** and **b**.
+
+Now lets define teh foreward pass function:
+```
+# Forward pass function
+def forward(x, w, b):
+    return w * x + b 
+```
+and loss function:
+```
+# Loss function (Mean Squared Error)
+def loss(y_true, y_pred):
+    return ((y_true - y_pred) ** 2).mean()
+```
+Now whenever we calculate loss function and then call **backward()** on that function, it will calculate the gradient of loss function w.r.t the gradient tracking enabled variables (in this case **∂L/∂w** and **∂L/∂b**) and store teh corresponding gradients to **w.grad** and **b.grad**:
+```
+# Calculate loss
+l = loss(Y, y_predicted)
+l.backward()  # Compute gradients
+# gradients: w.grad and b.grad
+```
+The rest of teh gradient descent code is teh same:
+```
+# Training loop     
+for epoch in range(epochs):
+    # Forward pass
+    y_predicted = forward(X, w, b)
+    
+    # Calculate loss
+    l = loss(Y, y_predicted)
+    losses.append(l.item())
+    
+    # Backward pass
+    l.backward()  # Compute gradients
+    
+    # Update parameters
+    with torch.no_grad():
+        w -= learning_rate * w.grad
+        b -= learning_rate * b.grad
+    
+    # Zero gradients for the next iteration
+    w.grad.zero_()
+    b.grad.zero_()
+    
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch {epoch + 1}: w={w.item():.3f}, b={b.item():.3f}, loss={l.item():.8f}')
+```
+![Alt text](./liniear_regression/Loss_over_Epochs_pytorch.png)
+
+[View full code](./liniear_regression/lr_pytorch.py)
