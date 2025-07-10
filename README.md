@@ -373,6 +373,118 @@ Thus using BCE has following advantages:
 | Output     | Any real value    | Value in (0, 1)          |
 | Prediction | Use directly      | > 0.5 --> 1, otherwise 0 |
 
+### More clean code for logistic regression
+We can implement logistic regression using torch.nn.Sequential, which is a cleaner and more concise way to stack layers in PyTorch.
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# 1. Training data
+X = torch.tensor([[-2.0], [-1.0], [0.0], [1.0], [2.0]])
+Y = torch.tensor([[0.0], [0.0], [0.0], [1.0], [1.0]])
+
+# 2. Define model using nn.Sequential
+model = nn.Sequential(
+    nn.Linear(1, 1),     # Input size: 1, Output size: 1
+    nn.Sigmoid()         # Activation: sigmoid for binary classification
+)
+
+# 3. Loss function and optimizer
+criterion = nn.BCELoss()                # Binary Cross Entropy Loss
+optimizer = optim.SGD(model.parameters(), lr=0.1)
+
+# 4. Training loop
+epochs = 100
+losses = []
+
+for epoch in range(epochs):
+    # Forward pass
+    y_pred = model(X)
+
+    # Compute loss
+    loss = criterion(y_pred, Y)
+    losses.append(loss.item())
+
+    # Backward pass and optimization
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch {epoch + 1}: loss={loss.item():.6f}')
+```
+Test the Model
+```python
+with torch.no_grad():
+    test_input = torch.tensor([[1.5]])
+    prediction = model(test_input)
+    print(f"Predicted probability: {prediction.item():.4f}")
+    print(f"Predicted class: {int(prediction.item() > 0.5)}")
+```
+Here we define the model:
+```python
+model = nn.Sequential(
+    nn.Linear(1, 1),
+    nn.Sigmoid()
+)
+```
+This will create forward function, weights **w** and **b** and also Sigmoid activation function. 
+
+Then we define loss function as
+```python
+criterion = nn.BCELoss()
+```
+#### Optimization
+In the previous case, we implemented gradient descent manually as
+```python
+w -= learning_rate * w.grad
+b -= learning_rate * b.grad
+```
+This optimization techniques is called Vanilla Gradient Descent (GD).
+
+In the first example, we had a very simple loss function with a shape of a parabolla centered around **w = 1.0**, with a single mminima (global minima).  
+
+What if we have more complex loss function with multipple minimas. 
+![Alt text](./logic_regression/minima.jpg)
+The job of the optimize is to find the global minima, but in this case, Vanilla GD will fail to reach global minimum, if we start at **w=-1.0**, for example. 
+
+There are different types of optimizers available in PyTorch, like Vanilla GD (SGD), Stochastic (SGD), Adam (adaptive learning rate), etc.  
+
+One can use Vanilla GD with the torch optimizer as
+```python
+optimizer = optim.SGD(model.parameters(), lr=0.1)
+```
+Now one can calculate forward function
+```python
+# Forward pass
+y_pred = model(X)
+```
+Loss function
+```python
+# Compute loss
+loss = criterion(y_pred, Y)
+```
+We dont have to make gradient of parameters zero individually, 
+```python
+optimizer.zero_grad() 
+```
+will do the job.
+
+And Backward pass 
+```python
+# Backward pass
+loss.backward()
+```
+And optimization 
+```python
+# optimization
+optimizer.step()
+```
+[View full code](./logic_regression/lr_sequential.py)
+
+## Multiclass classification
+
 ## Multilayer Perceptron (MLP / Feedforward Neural Netowrk)
 
 ## Convolutional Neural Netwroks (CNNs)
