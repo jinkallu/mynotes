@@ -33,6 +33,15 @@ v_entity = weighted_average([v_sound, v_vision, v_touch, v_smell], weights=[0.3,
 ```
 This identity vector becomes a meaningful reference that can be accessed through any one of its modalities or through abstract labels (e.g., the word "mother").
 
+Holographic Reduced Representations (HRRs) are used for identity binding, trained with contrastive loss to align vectors from different modalities (e.g., vision, audio). The binding function preserves syntactic relationships by encoding role-filler pairs.
+```python
+# HRR binding for identity construction
+from hrr import HRRBind
+v_sound = encode_audio(voice_clip)
+v_vision = encode_image(face_image)
+v_entity = HRRBind(v_sound, v_vision, role="identity")  # Trained with contrastive loss
+```
+
 We also recognize that vector addition is commutative and may not preserve syntactic relationships (e.g., agent-verb-object). Structured binding techniques or additional control vectors may be required to preserve grammar and logic in abstractions.
 ```python
 # Agent-action binding with syntactic structure
@@ -66,7 +75,17 @@ The system can observe sequences of sensory frames, such as a ball falling onto 
 
 This enables the system to learn physical laws through observation and simulation, and reuse them in future inferences.
 
-We acknowledge that mapping from 2D images to 3D scenes is an open problem in inverse graphics. We propose starting with simplified domains using known 3D object libraries, or human-annotated scene reconstructions.
+We acknowledge that mapping from 2D images to 3D scenes is an open problem in inverse graphics. To address inverse graphics, we propose using neural radiance fields (NeRF) or Instant-NGP to estimate 3D scenes from 2D images. These models are fine-tuned on sensory vectors to improve accuracy in unstructured environments.
+```python
+# Pseudo-code for 2D-to-3D scene estimation
+from nerf import InstantNGP
+image_vectors = [v_image_t1, v_image_t2]
+scene_3d = InstantNGP.infer(image_vectors)  # Estimate 3D scene
+scene_config = build_mujoco_scene(scene_3d, object_vectors)
+```
+We could also use Detectron2 like object detection libraries and then recreate a simple scene.
+
+We propose starting with simplified domains using known 3D object libraries, or human-annotated scene reconstructions.
 ```python
 # Scene setup from stored vectors
 scene_objects = [retrieve_vector("ball"), retrieve_vector("table")]
@@ -81,12 +100,16 @@ else:
 ```
 
 The feedback loop between simulation and perception (e.g., adjusting mass/velocity in MuJoCo to match observed video) will require optimization tools. We suggest using differentiable physics engines like Brax or DiffTaichi or reinforcement learning to reduce prediction error and build a predictive dynamics model.
+
+Sample use of Proximal Policy Optimization (PPO) to tune simulation parameters (e.g., mass, velocity). The reward function combines negative MSE between simulated and real frames with a penalty for computational cost.
 ```python
 # Reinforcement learning for simulation tuning
-state = v_scene
-action = adjust_params(mass, velocity)
-reward = -mse(simulated_frame, real_frame)
-policy = rl_agent(state, action, reward)
+from ppo import PPOAgent
+state = v_scene  # Vector-based scene representation
+action = adjust_params(mass, velocity)  # Simulation parameters
+reward = -mse(simulated_frame, real_frame) - 0.1 * compute_time
+ppo_agent = PPOAgent(state, action, reward)
+policy = ppo_agent.update()
 ```
 
 ### 2.5 Temporal Dynamics and Event Formation
@@ -98,6 +121,16 @@ temporal_embedding = transformer(sequence)
 v_event = aggregate(temporal_embedding)
 ```
 This allows the system to distinguish between states like "ball is falling" and "ball has fallen," based on sequence and change over time.
+
+To optimize temporal encoding, we use Performer, a linear-attention transformer, to process sensory vector sequences. Sequences longer than 100 frames are chunked into overlapping segments to ensure real-time performance.
+```python
+# Optimized temporal encoding
+from performer import Performer
+sequence = [v_t1, v_t2, ..., v_t100]  # Sensory vectors
+chunked_sequences = chunk(sequence, max_length=100, overlap=10)
+temporal_embedding = Performer(chunked_sequences)
+v_event = aggregate(temporal_embedding)
+```
 
 ### 2.6 Abstract vs. Grounded Thinking
 The system can think at varying levels of detail:
@@ -138,19 +171,65 @@ precision, recall = evaluate_retrieval(retrieved, ground_truth)
 projected_vectors = umap_project(vectors)
 plot_2d(projected_vectors, labels=modality_types)
 ```
+- **Temporal Event Accuracy**: Measure F1 score for predicted event sequences (e.g., "ball falling" vs. ground truth).
+- **Non-Physical Abstraction Quality**: Compute cosine similarity between hybrid vectors (e.g., v_justice) and ground-truth LLM embeddings for abstract concepts.
+```python
+# Temporal event accuracy
+from sklearn.metrics import f1_score
+predicted_events = predict_event_sequence(v_sequence)
+f1 = f1_score(ground_truth_events, predicted_events)
 
+# Non-physical abstraction quality
+from sklearn.metrics.pairwise import cosine_similarity
+v_justice = combine(v_justice_sensory, v_justice_symbolic)
+similarity = cosine_similarity(v_justice, llm_embed("justice_ground_truth"))
+```
+For large-scale visualization, we subsample vectors and apply UMAP hierarchically to visualize clusters at different granularity levels. A query-based debugging interface allows developers to inspect vectors by modality, timestamp, or cluster membership.
+```python
+# Hierarchical visualization
+from umap import UMAP
+subsampled_vectors = subsample(vectors, max_samples=10000)
+projected_vectors = UMAP(n_components=2).fit_transform(subsampled_vectors)
+plot_hierarchical(projected_vectors, cluster_labels)
+
+# Query-based debugging
+debug_vectors = query_vectors(modality="vision", timestamp_range=[t1, t2])
+log_metadata(debug_vectors)
+```
 
 ## Architecture
-### Sensory Encoding Layer
+### 3.1 Sensory Encoding Layer
 - Vision: CLIP, DINOv2
 - Audio: Wav2Vec, Whisper
-- Touch: Learned tactile encoders
-- Smell: Placeholder / proxy
+- Touch: Transformer-based encoder trained on GelSight tactile sensor data to capture pressure, texture, and force as 256-dimensional vectors.
+```python
+# Touch encoding example
+from transformer import TactileTransformer
+tactile_transformer = TactileTransformer(input_dim=sensor_array, output_dim=256)
+v_touch = tactile_transformer(tactile_array)
+```
+- Smell: Graph neural networks (e.g., GraphSAGE) trained on Pyrfume dataset to encode molecular signatures into 128-dimensional vectors.
+```python
+# Smell encoding example
+from gnn import GraphSAGE
+smell_gnn = GraphSAGE(input_dim=chemical_features, output_dim=128)
+v_smell = smell_gnn(odor_molecular_graph)
+```
 
 ### 3.2 Vector Memory Store
 - Store: UUID, vector, modality, timestamp, metadata
 - Metadata includes: spatial config, temporal order, source reliability
 - Operations: Insertion, K-NN search, clustering, averaging, configuration modeling
+- To manage noise and forgetting, vectors with retrieval frequency below a threshold are downweighted using an exponential decay function. Obsolete vectors are pruned periodically to maintain storage efficiency.
+```python
+# Forgetting mechanism
+from datetime import datetime
+for vector in vector_store:
+    retrieval_freq = get_retrieval_frequency(vector)
+    vector.weight *= exp(-decay_rate * (current_time - vector.timestamp))
+if vector.weight < threshold:
+    prune_vector(vector)
+```
 
 ### 3.3 Concept and Configuration Formation
 - Identity and configuration vectors formed via binding and weighted aggregation
@@ -225,6 +304,7 @@ plot_2d(projected_vectors, labels=modality_types)
 - Form identities through averaging and tagging
 - Link sensory vectors to form identity composites
 - Auto-discover categories and abstractions via clustering
+- Solve minimal toy-problem: The initial validation will focus on a 'kitchen table' environment. The agent will be tasked with learning the identities of 3-5 objects (e.g., cup, apple, plate) from vision and sound (e.g., the sound of a cup being set down), learning the physical dynamics of pushing them, and correctly responding to linguistic queries like 'push the red object left of the plate'.
 
 ### Phase 3: Simulation Layer
 - Annotate basic 3D scenes
@@ -255,3 +335,11 @@ This architecture proposes a new direction for embodied intelligence by merging 
 - Extending LLMs with embedded vector context windows
 
 ## 10. References
+1. Clip (https://github.com/openai/CLIP)
+2. MuJoCo
+3. FAISS
+4. HRR
+5. Inverse Graphics
+6. V-JEPA
+7. PaLM-E
+8. Detectron2 
